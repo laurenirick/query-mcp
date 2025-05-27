@@ -37,7 +37,7 @@ const pool = createPool(databaseUrl)
 // Resource Registrations
 // =========================
 
-server.resource('table-metadata', 'table-metadata://all', () => handleListResources(pool, schema))
+server.resource('table-metadata', 'table-metadata://all', () => handleListResources(schema))
 
 server.resource(
     'table-metadata-table',
@@ -47,7 +47,7 @@ server.resource(
             {
                 uri: uri.href,
                 mimeType: 'application/json',
-                text: JSON.stringify(await handleReadResource(pool, { params: { uri: uri.href } }, schema), null, 2),
+                text: JSON.stringify(await handleReadResource({ params: { uri: uri.href } }, schema), null, 2),
             },
         ],
     }),
@@ -72,7 +72,7 @@ server.tool(
     'List all tables in the connected database. Returns an array of table names.',
     {},
     async () => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleListTables(pool, schema), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleListTables(schema), null, 2) }],
     }),
 )
 
@@ -81,7 +81,7 @@ server.tool(
     'Describe the columns, relationships, and sample data for a given table. Input: table name. Output: schema, relationships, samples, and column stats.',
     { table: z.string() },
     async ({ table }: { table: string }) => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleDescribeTable(pool, table, schema), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleDescribeTable(table, schema), null, 2) }],
     }),
 )
 
@@ -102,7 +102,7 @@ server.tool(
         content: [
             {
                 type: 'text',
-                text: JSON.stringify(await handleGenerateSql(question, { ...context, pool, schema }), null, 2),
+                text: JSON.stringify(await handleGenerateSql(question, { ...context, schema }), null, 2),
             },
         ],
     }),

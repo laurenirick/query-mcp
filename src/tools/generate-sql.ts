@@ -8,12 +8,12 @@ export async function handleGenerateSql(question: string, context: any) {
     let tableMetadata: Record<string, any> = {}
     if (tables.length === 0 && context?.pool) {
         // If context provides a pool, use it to list tables
-        const allTables = await listTables(context.pool, schema)
+        const allTables = await listTables(schema)
         if ((allTables as any).error) {
             return { error: (allTables as any).error }
         }
         for (const table of allTables as string[]) {
-            const meta = await getTableSchema(context.pool, table, schema)
+            const meta = await getTableSchema(table, schema)
             if (meta.error) {
                 return { error: meta.error }
             }
@@ -21,7 +21,7 @@ export async function handleGenerateSql(question: string, context: any) {
         }
     } else if (tables.length > 0 && context?.pool) {
         for (const table of tables) {
-            const meta = await getTableSchema(context.pool, table, schema)
+            const meta = await getTableSchema(table, schema)
             if (meta.error) {
                 return { error: meta.error }
             }

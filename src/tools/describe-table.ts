@@ -1,8 +1,7 @@
-import { Pool } from 'pg'
 import { getTableSchema } from '../db/table-metadata.js'
 
-export async function handleDescribeTable(pool: Pool, table: string, schema = 'public') {
-    const tableSchema = await getTableSchema(pool, table, schema)
+export async function handleDescribeTable(table: string, schema = 'public') {
+    const tableSchema = await getTableSchema(table, schema)
     if (tableSchema.error) {
         return { error: tableSchema.error }
     }
