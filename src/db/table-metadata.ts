@@ -62,7 +62,7 @@ export async function refreshTableMetadata(pool: Pool, schema = 'public', table?
             let max = null
             try {
                 const statsResult = await pool.query(
-                    `SELECT COUNT(DISTINCT "${col}") AS distinct_count, COUNT(*) FILTER (WHERE "${col}" IS NULL) AS null_count FROM ${fqTable}`,
+                    `SELECT COUNT(DISTINCT "${col}") AS distinct_count, SUM(CASE WHEN "${col}" IS NULL THEN 1 ELSE 0 END) AS null_count FROM ${fqTable}`,
                 )
                 distinct = Number(statsResult.rows[0].distinct_count)
                 nullCount = Number(statsResult.rows[0].null_count)
@@ -71,7 +71,7 @@ export async function refreshTableMetadata(pool: Pool, schema = 'public', table?
             }
             try {
                 const topResult = await pool.query(
-                    `SELECT "${col}", COUNT(*) AS count FROM ${fqTable} GROUP BY "${col}" ORDER BY count DESC NULLS LAST LIMIT 3`,
+                    `SELECT "${col}", COUNT(*) AS count FROM ${fqTable} GROUP BY "${col}" ORDER BY ("${col}" IS NULL), count DESC LIMIT 3`,
                 )
                 topValues = {}
                 for (const row of topResult.rows) {
