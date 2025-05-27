@@ -40,9 +40,10 @@ export async function refreshTableMetadata(pool: Pool, schema = 'public', table?
         // Sample newest rows (try to use 'id' or 'created_at' if present, else just LIMIT)
         let orderBy = ''
         const colNames = columns.map((col: any) => col.column_name)
-        if (colNames.includes('created_at')) orderBy = 'ORDER BY created_at DESC'
-        else if (colNames.includes('id')) orderBy = 'ORDER BY id DESC'
-        const sampleQuery = `SELECT * FROM "${tbl}" ${orderBy} LIMIT 5`
+        if (colNames.includes('created_at')) orderBy = 'ORDER BY "created_at" DESC'
+        else if (colNames.includes('id')) orderBy = 'ORDER BY "id" DESC'
+        const fqTable = `"${schema}"."${tbl}"`
+        const sampleQuery = `SELECT * FROM ${fqTable} ${orderBy} LIMIT 5`
         let samples: any[] = []
         try {
             const sampleRows = await pool.query(sampleQuery)
@@ -61,7 +62,7 @@ export async function refreshTableMetadata(pool: Pool, schema = 'public', table?
             let max = null
             try {
                 const statsResult = await pool.query(
-                    `SELECT COUNT(DISTINCT "${col}") AS distinct_count, COUNT(*) FILTER (WHERE "${col}" IS NULL) AS null_count FROM "${tbl}"`,
+                    `SELECT COUNT(DISTINCT "${col}") AS distinct_count, COUNT(*) FILTER (WHERE "${col}" IS NULL) AS null_count FROM ${fqTable}`,
                 )
                 distinct = Number(statsResult.rows[0].distinct_count)
                 nullCount = Number(statsResult.rows[0].null_count)
@@ -70,7 +71,7 @@ export async function refreshTableMetadata(pool: Pool, schema = 'public', table?
             }
             try {
                 const topResult = await pool.query(
-                    `SELECT "${col}", COUNT(*) AS count FROM "${tbl}" GROUP BY "${col}" ORDER BY count DESC NULLS LAST LIMIT 3`,
+                    `SELECT "${col}", COUNT(*) AS count FROM ${fqTable} GROUP BY "${col}" ORDER BY count DESC NULLS LAST LIMIT 3`,
                 )
                 topValues = {}
                 for (const row of topResult.rows) {
@@ -80,7 +81,9 @@ export async function refreshTableMetadata(pool: Pool, schema = 'public', table?
                 /* ignore error */
             }
             try {
-                const minmaxResult = await pool.query(`SELECT MIN("${col}") AS min, MAX("${col}") AS max FROM "${tbl}"`)
+                const minmaxResult = await pool.query(
+                    `SELECT MIN("${col}") AS min, MAX("${col}") AS max FROM ${fqTable}`,
+                )
                 min = minmaxResult.rows[0].min
                 max = minmaxResult.rows[0].max
             } catch {
