@@ -1,9 +1,7 @@
 import { listTables } from '../db/table-metadata.js'
+import { Pool } from 'pg'
 
-export async function handleListTables(schema = 'public') {
-    const tables = await listTables(schema)
-    if ((tables as any).error) {
-        return { error: (tables as any).error }
-    }
+export async function handleListTables(pool: Pool, schema = 'public') {
+    const tables = await listTables(pool, schema)
     return { tables }
 }

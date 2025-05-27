@@ -1,13 +1,8 @@
 import { listTables, getTableSchema } from '../db/table-metadata.js'
+import { Pool } from 'pg'
 
-export async function handleListResources(schema = 'public') {
-    const tables = await listTables(schema)
-    if ((tables as any).error) {
-        return {
-            contents: [],
-            error: (tables as any).error,
-        }
-    }
+export async function handleListResources(pool: Pool, schema = 'public') {
+    const tables = await listTables(pool, schema)
     // Return as MCP contents array, one per table
     return {
         contents: (tables as string[]).map((table: string) => ({

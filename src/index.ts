@@ -37,7 +37,7 @@ const pool = createPool(databaseUrl)
 // Resource Registrations
 // =========================
 
-server.resource('table-metadata', 'table-metadata://all', () => handleListResources(schema))
+server.resource('table-metadata', 'table-metadata://all', () => handleListResources(pool, schema))
 
 server.resource(
     'table-metadata-table',
@@ -72,7 +72,7 @@ server.tool(
     'List all tables in the connected database. Returns an array of table names.',
     {},
     async () => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleListTables(schema), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleListTables(pool, schema), null, 2) }],
     }),
 )
 

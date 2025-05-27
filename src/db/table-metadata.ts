@@ -1,12 +1,12 @@
 import { Pool } from 'pg'
 import { readTableMetadataCache, writeTableMetadataCache } from '../cache/metadata.js'
 
-export async function listTables(schema = 'public'): Promise<string[] | { error: string }> {
-    const tables = await readTableMetadataCache(schema)
-    if (!tables) {
-        return { error: 'Metadata cache not ready. Please run refresh_metadata.' }
-    }
-    return tables
+export async function listTables(pool: Pool, schema = 'public'): Promise<string[]> {
+    const tablesResult = await pool.query(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_type = 'BASE TABLE'",
+        [schema],
+    )
+    return tablesResult.rows.map((row: any) => row.table_name)
 }
 
 export async function getTableSchema(table: string, schema = 'public'): Promise<any> {
@@ -22,8 +22,9 @@ export async function refreshTableMetadata(pool: Pool, schema = 'public', table?
     if (table) {
         tables = [table]
     } else {
+        //TODO: could support views in the future, but this is only tables for now
         const tablesResult = await pool.query(
-            'SELECT table_name FROM information_schema.tables WHERE table_schema = $1',
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_type = 'BASE TABLE'",
             [schema],
         )
         tables = tablesResult.rows.map((row: any) => row.table_name)
