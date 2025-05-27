@@ -9,12 +9,23 @@ export async function handleGenerateSql(question: string, context: any) {
     if (tables.length === 0 && context?.pool) {
         // If context provides a pool, use it to list tables
         const allTables = await listTables(context.pool, schema)
-        for (const table of allTables) {
-            tableMetadata[table] = await getTableSchema(context.pool, table, schema)
+        if ((allTables as any).error) {
+            return { error: (allTables as any).error }
+        }
+        for (const table of allTables as string[]) {
+            const meta = await getTableSchema(context.pool, table, schema)
+            if (meta.error) {
+                return { error: meta.error }
+            }
+            tableMetadata[table] = meta
         }
     } else if (tables.length > 0 && context?.pool) {
         for (const table of tables) {
-            tableMetadata[table] = await getTableSchema(context.pool, table, schema)
+            const meta = await getTableSchema(context.pool, table, schema)
+            if (meta.error) {
+                return { error: meta.error }
+            }
+            tableMetadata[table] = meta
         }
     } else {
         tableMetadata = context?.tableMetadata || {}

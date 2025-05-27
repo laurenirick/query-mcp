@@ -1,18 +1,18 @@
 import { Pool } from 'pg'
 import { readTableMetadataCache, writeTableMetadataCache } from '../cache/metadata.js'
 
-export async function listTables(pool: Pool, schema = 'public', refresh = false): Promise<string[]> {
-    let metadata = !refresh ? await readTableMetadataCache(schema) : null
+export async function listTables(pool: Pool, schema = 'public'): Promise<string[] | { error: string }> {
+    let metadata = await readTableMetadataCache(schema)
     if (!metadata) {
-        metadata = await refreshTableMetadata(pool, schema)
+        return { error: 'Metadata cache not ready. Please run refresh_metadata.' }
     }
     return metadata.tables || []
 }
 
-export async function getTableSchema(pool: Pool, table: string, schema = 'public', refresh = false): Promise<any> {
-    let metadata = !refresh ? await readTableMetadataCache(schema) : null
+export async function getTableSchema(pool: Pool, table: string, schema = 'public'): Promise<any> {
+    let metadata = await readTableMetadataCache(schema)
     if (!metadata) {
-        metadata = await refreshTableMetadata(pool, schema)
+        return { error: 'Metadata cache not ready. Please run refresh_metadata.' }
     }
     // Return schema and relationships for the table
     return {

@@ -37,7 +37,7 @@ const pool = createPool(databaseUrl)
 // Resource Registrations
 // =========================
 
-server.resource('table-metadata', 'table-metadata://all', async () => await handleListResources(pool, schema))
+server.resource('table-metadata', 'table-metadata://all', () => handleListResources(pool, schema))
 
 server.resource(
     'table-metadata-table',
