@@ -79,7 +79,7 @@ server.tool(
 server.tool(
     'describe_table',
     'Describe the columns, relationships, and sample data for a given table. Input: table name. Output: schema, relationships, samples, and column stats.',
-    { table: z.string() },
+    { table: z.string().describe('The name of the table to describe.') },
     async ({ table }: { table: string }) => ({
         content: [{ type: 'text', text: JSON.stringify(await handleDescribeTable(table, schema), null, 2) }],
     }),
@@ -88,7 +88,7 @@ server.tool(
 server.tool(
     'run_query',
     'Run a read-only SQL SELECT query against the database. Input: SQL string. Output: query result rows.',
-    { sql: z.string() },
+    { sql: z.string().describe('A SQL SELECT query to run against the database.') },
     async ({ sql }: { sql: string }) => ({
         content: [{ type: 'text', text: JSON.stringify(await handleRunQuery(pool, sql), null, 2) }],
     }),
@@ -97,7 +97,10 @@ server.tool(
 server.tool(
     'generate_sql',
     'Generate a SQL query for a natural language question, using available schema and definitions. Input: question string and optional context. Output: SQL query.',
-    { question: z.string(), context: z.any().optional() },
+    {
+        question: z.string().describe('A natural language question to generate SQL for.'),
+        context: z.any().optional().describe('Optional context for SQL generation, such as table or schema info.'),
+    },
     async ({ question, context }: { question: string; context?: any }) => ({
         content: [
             {
@@ -111,7 +114,7 @@ server.tool(
 server.tool(
     'get_definition',
     'Retrieve the business definition for a given term. Input: term string. Output: definition text.',
-    { term: z.string() },
+    { term: z.string().describe('The business term to retrieve the definition for.') },
     async ({ term }: { term: string }) => ({
         content: [{ type: 'text', text: JSON.stringify(await handleGetDefinition(term), null, 2) }],
     }),
@@ -120,7 +123,10 @@ server.tool(
 server.tool(
     'store_definition',
     'Store or update a business definition for a term. Input: term and value strings. Output: success status.',
-    { term: z.string(), value: z.string() },
+    {
+        term: z.string().describe('The business term to define.'),
+        value: z.string().describe('The definition text for the term.'),
+    },
     async ({ term, value }: { term: string; value: string }) => ({
         content: [{ type: 'text', text: JSON.stringify(await handleStoreDefinitionTool(term, value), null, 2) }],
     }),
@@ -128,10 +134,10 @@ server.tool(
 
 server.tool(
     'refresh_metadata',
-    'Refresh the cached database metadata (schemas, samples, stats). No input. Output: success message.',
-    {},
-    async () => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleRefreshMetadata(pool, schema), null, 2) }],
+    'Refresh the cached database metadata (schemas, samples, stats). Optionally specify a table to refresh only that table. Output: success message.',
+    { table: z.string().optional().describe('The name of a table to refresh, or leave blank to refresh all tables.') },
+    async ({ table }: { table?: string }) => ({
+        content: [{ type: 'text', text: JSON.stringify(await handleRefreshMetadata(pool, schema, table), null, 2) }],
     }),
 )
 
