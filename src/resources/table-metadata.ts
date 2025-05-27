@@ -1,8 +1,8 @@
 import { Pool } from 'pg'
 import { listTables, getTableSchema } from '../db/table-metadata.js'
 
-export async function handleListResources(pool: Pool, refresh = false) {
-    const tables = await listTables(pool, refresh)
+export async function handleListResources(pool: Pool, schema = 'public', refresh = false) {
+    const tables = await listTables(pool, schema, refresh)
     // Return as MCP contents array, one per table
     return {
         contents: tables.map(table => ({
@@ -13,7 +13,7 @@ export async function handleListResources(pool: Pool, refresh = false) {
     }
 }
 
-export async function handleReadResource(pool: Pool, request: any, refresh = false) {
+export async function handleReadResource(pool: Pool, request: any, schema = 'public', refresh = false) {
     // Expect URI like /table-metadata/{table}
     const uri: string = request.params.uri
     const match = uri.match(/^table-metadata:\/\/(.+)$/)
@@ -21,11 +21,11 @@ export async function handleReadResource(pool: Pool, request: any, refresh = fal
         return { error: 'Invalid table-metadata URI', uri }
     }
     const table = match[1]
-    const schema = await getTableSchema(pool, table, refresh)
+    const tableSchema = await getTableSchema(pool, table, schema, refresh)
     return {
-        columns: schema.columns,
-        relationships: schema.relationships,
-        samples: schema.samples,
-        columnStats: schema.columnStats,
+        columns: tableSchema.columns,
+        relationships: tableSchema.relationships,
+        samples: tableSchema.samples,
+        columnStats: tableSchema.columnStats,
     }
 }

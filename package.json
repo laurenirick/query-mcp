@@ -20,7 +20,7 @@
         "watch": "tsc --watch",
         "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
         "inspect": "npx @modelcontextprotocol/inspector node dist/index.js postgresql://postgres:postgres@localhost:5432/sample",
-        "inspect-cli": "npx @modelcontextprotocol/inspector --cli node dist/index.js postgresql://postgres:postgres@localhost:5432/sample --method resources/list"
+        "inspect-cli": "npx @modelcontextprotocol/inspector --cli node dist/index.js postgresql://postgres:postgres@localhost:5432/sample --method resources/read --uri table-metadata://all"
     },
     "author": "",
     "license": "ISC",

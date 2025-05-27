@@ -30,13 +30,14 @@ if (args.length === 0) {
 }
 
 const databaseUrl = args[0]
+const schema = args[1] || 'public'
 const pool = createPool(databaseUrl)
 
 // =========================
 // Resource Registrations
 // =========================
 
-server.resource('table-metadata', 'table-metadata://all', async () => await handleListResources(pool))
+server.resource('table-metadata', 'table-metadata://all', async () => await handleListResources(pool, schema))
 
 server.resource(
     'table-metadata-table',
@@ -46,7 +47,7 @@ server.resource(
             {
                 uri: uri.href,
                 mimeType: 'application/json',
-                text: JSON.stringify(await handleReadResource(pool, { params: { uri: uri.href } }), null, 2),
+                text: JSON.stringify(await handleReadResource(pool, { params: { uri: uri.href } }, schema), null, 2),
             },
         ],
     }),
@@ -71,7 +72,7 @@ server.tool(
     'List all tables in the connected database. Returns an array of table names.',
     {},
     async () => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleListTables(pool), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleListTables(pool, schema), null, 2) }],
     }),
 )
 
@@ -80,7 +81,7 @@ server.tool(
     'Describe the columns, relationships, and sample data for a given table. Input: table name. Output: schema, relationships, samples, and column stats.',
     { table: z.string() },
     async ({ table }: { table: string }) => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleDescribeTable(pool, table), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleDescribeTable(pool, table, schema), null, 2) }],
     }),
 )
 
@@ -99,7 +100,10 @@ server.tool(
     { question: z.string(), context: z.any().optional() },
     async ({ question, context }: { question: string; context?: any }) => ({
         content: [
-            { type: 'text', text: JSON.stringify(await handleGenerateSql(question, { ...context, pool }), null, 2) },
+            {
+                type: 'text',
+                text: JSON.stringify(await handleGenerateSql(question, { ...context, pool, schema }), null, 2),
+            },
         ],
     }),
 )
@@ -127,7 +131,7 @@ server.tool(
     'Refresh the cached database metadata (schemas, samples, stats). No input. Output: success message.',
     {},
     async () => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleRefreshMetadata(pool), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleRefreshMetadata(pool, schema), null, 2) }],
     }),
 )
 

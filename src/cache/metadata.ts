@@ -5,18 +5,20 @@ import { getCacheDir } from './getCacheDir.js'
 const CACHE_DIR = getCacheDir()
 const TABLE_METADATA_FILE = path.join(CACHE_DIR, 'table-metadata.json')
 
-export async function readTableMetadataCache(): Promise<any | null> {
+export async function readTableMetadataCache(schema = 'public'): Promise<any | null> {
+    const file = schema === 'public' ? TABLE_METADATA_FILE : path.join(CACHE_DIR, `table-metadata-${schema}.json`)
     try {
-        const data = await fs.readFile(TABLE_METADATA_FILE, 'utf-8')
+        const data = await fs.readFile(file, 'utf-8')
         return JSON.parse(data)
     } catch {
         return null
     }
 }
 
-export async function writeTableMetadataCache(metadata: any): Promise<void> {
+export async function writeTableMetadataCache(metadata: any, schema = 'public'): Promise<void> {
     await fs.mkdir(CACHE_DIR, { recursive: true })
-    await fs.writeFile(TABLE_METADATA_FILE, JSON.stringify(metadata, null, 2), 'utf-8')
+    const file = schema === 'public' ? TABLE_METADATA_FILE : path.join(CACHE_DIR, `table-metadata-${schema}.json`)
+    await fs.writeFile(file, JSON.stringify(metadata, null, 2), 'utf-8')
 }
 
 export async function clearTableMetadataCache(): Promise<void> {

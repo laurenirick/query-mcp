@@ -4,16 +4,17 @@ export async function handleGenerateSql(question: string, context: any) {
     // Gather all table metadata
     // For simplicity, gather all tables and their schemas
     const tables = context?.tables || []
+    const schema = context?.schema || 'public'
     let tableMetadata: Record<string, any> = {}
     if (tables.length === 0 && context?.pool) {
         // If context provides a pool, use it to list tables
-        const allTables = await listTables(context.pool)
+        const allTables = await listTables(context.pool, schema)
         for (const table of allTables) {
-            tableMetadata[table] = await getTableSchema(context.pool, table)
+            tableMetadata[table] = await getTableSchema(context.pool, table, schema)
         }
     } else if (tables.length > 0 && context?.pool) {
         for (const table of tables) {
-            tableMetadata[table] = await getTableSchema(context.pool, table)
+            tableMetadata[table] = await getTableSchema(context.pool, table, schema)
         }
     } else {
         tableMetadata = context?.tableMetadata || {}

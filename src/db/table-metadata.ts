@@ -1,18 +1,18 @@
 import { Pool } from 'pg'
 import { readTableMetadataCache, writeTableMetadataCache } from '../cache/metadata.js'
 
-export async function listTables(pool: Pool, refresh = false): Promise<string[]> {
-    let metadata = !refresh ? await readTableMetadataCache() : null
+export async function listTables(pool: Pool, schema = 'public', refresh = false): Promise<string[]> {
+    let metadata = !refresh ? await readTableMetadataCache(schema) : null
     if (!metadata) {
-        metadata = await refreshTableMetadata(pool)
+        metadata = await refreshTableMetadata(pool, schema)
     }
     return metadata.tables || []
 }
 
-export async function getTableSchema(pool: Pool, table: string, refresh = false): Promise<any> {
-    let metadata = !refresh ? await readTableMetadataCache() : null
+export async function getTableSchema(pool: Pool, table: string, schema = 'public', refresh = false): Promise<any> {
+    let metadata = !refresh ? await readTableMetadataCache(schema) : null
     if (!metadata) {
-        metadata = await refreshTableMetadata(pool)
+        metadata = await refreshTableMetadata(pool, schema)
     }
     // Return schema and relationships for the table
     return {
@@ -23,11 +23,11 @@ export async function getTableSchema(pool: Pool, table: string, refresh = false)
     }
 }
 
-export async function refreshTableMetadata(pool: Pool): Promise<any> {
+export async function refreshTableMetadata(pool: Pool, schema = 'public'): Promise<any> {
     // Query all tables
-    const tablesResult = await pool.query(
-        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
-    )
+    const tablesResult = await pool.query('SELECT table_name FROM information_schema.tables WHERE table_schema = $1', [
+        schema,
+    ])
     const tables = tablesResult.rows.map(row => row.table_name)
 
     // Query schemas for each table
@@ -38,8 +38,8 @@ export async function refreshTableMetadata(pool: Pool): Promise<any> {
     for (const table of tables) {
         // Columns
         const columnsResult = await pool.query(
-            'SELECT column_name, data_type FROM information_schema.columns WHERE table_name = $1',
-            [table],
+            'SELECT column_name, data_type FROM information_schema.columns WHERE table_name = $1 AND table_schema = $2',
+            [table, schema],
         )
         schemas[table] = columnsResult.rows
 
@@ -101,7 +101,8 @@ export async function refreshTableMetadata(pool: Pool): Promise<any> {
     }
 
     // Query relationships (foreign keys)
-    const fkResult = await pool.query(`
+    const fkResult = await pool.query(
+        `
     SELECT
       tc.table_name AS source_table,
       kcu.column_name AS source_column,
@@ -115,8 +116,9 @@ export async function refreshTableMetadata(pool: Pool): Promise<any> {
       JOIN information_schema.constraint_column_usage AS ccu
         ON ccu.constraint_name = tc.constraint_name
         AND ccu.table_schema = tc.table_schema
-    WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = 'public';
-  `)
+    WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = $1;`,
+        [schema],
+    )
 
     // Organize relationships by source table
     const relationships: Record<string, any[]> = {}
@@ -130,6 +132,6 @@ export async function refreshTableMetadata(pool: Pool): Promise<any> {
     }
 
     const metadata = { tables, schemas, relationships, samples, columnStats }
-    await writeTableMetadataCache(metadata)
+    await writeTableMetadataCache(metadata, schema)
     return metadata
 }
