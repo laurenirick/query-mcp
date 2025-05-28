@@ -11,7 +11,7 @@ import { handleDescribeTable } from './tools/describe-table.js'
 import { handleRunQuery } from './tools/run-query.js'
 import { handleGenerateSql } from './tools/generate-sql.js'
 import { handleGetDefinition } from './tools/get-definition.js'
-import { handleStoreDefinition as handleStoreDefinitionTool } from './tools/store-definition.js'
+import { handleStoreDefinition as handleStoreDefinitionTool, handleRemoveDefinition } from './tools/store-definition.js'
 import { handleRefreshMetadata } from './tools/refresh-metadata.js'
 import { getRefreshingState } from './cache/refreshing.js'
 import { registerGenerateSqlPrompt } from './prompts/generate-sql.js'
@@ -123,13 +123,24 @@ server.tool(
 
 server.tool(
     'store_definition',
-    'Store or update a business definition for a term. Input: term and value strings. Output: success status.',
+    'Store or update a business definition for a term. If the term exists, it will be updated. Input: term and value strings. Output: success status.',
     {
         term: z.string().describe('The business term to define.'),
         value: z.string().describe('The definition text for the term.'),
     },
     async ({ term, value }: { term: string; value: string }) => ({
         content: [{ type: 'text', text: JSON.stringify(await handleStoreDefinitionTool(term, value), null, 2) }],
+    }),
+)
+
+server.tool(
+    'remove_definition',
+    'Remove a business definition for a term. Input: term string. Output: success status.',
+    {
+        term: z.string().describe('The business term to remove.'),
+    },
+    async ({ term }: { term: string }) => ({
+        content: [{ type: 'text', text: JSON.stringify(await handleRemoveDefinition(term), null, 2) }],
     }),
 )
 

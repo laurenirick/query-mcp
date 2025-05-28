@@ -34,3 +34,11 @@ export async function storeDefinition(term: string, value: string): Promise<bool
 export async function getAllDefinitions(): Promise<Record<string, string>> {
     return await readDefinitions()
 }
+
+export async function removeDefinition(term: string): Promise<boolean> {
+    const defs = await readDefinitions()
+    if (!(term in defs)) return false
+    delete defs[term]
+    await writeDefinitions(defs)
+    return true
+}
