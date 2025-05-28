@@ -1,16 +1,11 @@
 import { Pool } from 'pg'
 
 export async function handleRunQuery(pool: Pool, sql: string) {
-    // Only allow SELECT queries for safety
-    if (!/^\s*select\b/i.test(sql)) {
-        return {
-            error: 'Only SELECT queries are allowed.',
-            rows: [],
-            isError: true,
-        }
-    }
+    const client = await pool.connect()
     try {
-        const result = await pool.query(sql)
+        await client.query('BEGIN TRANSACTION READ ONLY')
+        const result = await client.query(sql)
+        await client.query('ROLLBACK') // or COMMIT, but ROLLBACK is safer for read-only
         return {
             rows: result.rows,
             isError: false,
@@ -21,5 +16,7 @@ export async function handleRunQuery(pool: Pool, sql: string) {
             rows: [],
             isError: true,
         }
+    } finally {
+        client.release()
     }
 }
