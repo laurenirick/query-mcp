@@ -19,7 +19,7 @@ import { getAllDefinitions } from './definitions/store.js'
 
 const server = new McpServer({
     name: 'robrichardson13/query-mcp',
-    version: '1.0.0',
+    version: '1.0.3',
 })
 
 registerGenerateSqlPrompt(server)
