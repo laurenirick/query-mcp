@@ -2,7 +2,7 @@
     "name": "query-mcp",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "main": "./dist/index.js",
     "type": "module",
     "bin": {
         "query-mcp": "dist/index.js"
@@ -11,7 +11,6 @@
         "dist"
     ],
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
         "demo:script": "tsx scripts/demo.ts",
         "seed:script": "tsx scripts/seed.ts",
         "format": "prettier --write .",

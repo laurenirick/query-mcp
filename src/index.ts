@@ -17,7 +17,7 @@ import { registerGenerateSqlPrompt } from './prompts/generate-sql.js'
 import { getAllDefinitions } from './definitions/store.js'
 
 const server = new McpServer({
-    name: 'example-servers/stub',
+    name: 'robrichardson13/query-mcp',
     version: '1.0.0',
 })
 
