@@ -13,6 +13,7 @@ import { handleGenerateSql } from './tools/generate-sql.js'
 import { handleGetDefinition } from './tools/get-definition.js'
 import { handleStoreDefinition as handleStoreDefinitionTool } from './tools/store-definition.js'
 import { handleRefreshMetadata } from './tools/refresh-metadata.js'
+import { getRefreshingState } from './cache/refreshing.js'
 import { registerGenerateSqlPrompt } from './prompts/generate-sql.js'
 import { getAllDefinitions } from './definitions/store.js'
 
@@ -148,6 +149,19 @@ server.tool(
     async () => ({
         content: [{ type: 'text', text: JSON.stringify(await getAllDefinitions()) }],
     }),
+)
+
+server.tool(
+    'refresh_status',
+    'Check the refresh status for all tables or a specific table. Input: optional table name. Output: refresh state.',
+    { table: z.string().optional().describe('The name of a table to check, or leave blank for all tables.') },
+    async ({ table }: { table?: string }) => {
+        const state = await getRefreshingState(schema)
+        if (table) {
+            return { content: [{ type: 'text', text: JSON.stringify({ [table]: !!state[table] }, null, 2) }] }
+        }
+        return { content: [{ type: 'text', text: JSON.stringify(state, null, 2) }] }
+    },
 )
 
 async function runServer() {

@@ -3,7 +3,7 @@ import path from 'path'
 import { getCacheDir } from '../cache/getCacheDir.js'
 
 const CACHE_DIR = getCacheDir()
-const DEFINITIONS_FILE = path.join(CACHE_DIR, 'definitions.json')
+const DEFINITIONS_FILE = path.join(CACHE_DIR, '_definitions.json')
 
 async function readDefinitions(): Promise<Record<string, string>> {
     try {
