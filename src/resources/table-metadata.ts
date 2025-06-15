@@ -1,8 +1,7 @@
-import { listTables, getTableSchema } from '../db/table-metadata.js'
-import { Pool } from 'pg'
+import { DatabaseAdapter } from '../db/adapter.js'
 
-export async function handleListResources(pool: Pool, schema = 'public') {
-    const tables = await listTables(pool, schema)
+export async function handleListResources(db: DatabaseAdapter, schema = 'public') {
+    const tables = await db.listTables(schema)
     // Return as MCP contents array, one per table
     return {
         contents: (tables as string[]).map((table: string) => ({
@@ -13,7 +12,7 @@ export async function handleListResources(pool: Pool, schema = 'public') {
     }
 }
 
-export async function handleReadResource(request: any, schema = 'public') {
+export async function handleReadResource(db: DatabaseAdapter, request: any, schema = 'public') {
     // Expect URI like /table-metadata/{table}
     const uri: string = request.params.uri
     const match = uri.match(/^table-metadata:\/\/(.+)$/)
@@ -21,8 +20,8 @@ export async function handleReadResource(request: any, schema = 'public') {
         return { error: 'Invalid table-metadata URI', uri }
     }
     const table = match[1]
-    const tableSchema = await getTableSchema(table, schema)
-    if (tableSchema.error) {
+    const tableSchema = await db.getTableSchema(table, schema)
+    if ('error' in tableSchema) {
         return { error: tableSchema.error }
     }
     return {

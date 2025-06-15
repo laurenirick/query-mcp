@@ -1,8 +1,8 @@
-import { getTableSchema } from '../db/table-metadata.js'
+import { DatabaseAdapter } from '../db/adapter.js'
 
-export async function handleDescribeTable(table: string, schema = 'public') {
-    const tableSchema = await getTableSchema(table, schema)
-    if (tableSchema.error) {
+export async function handleDescribeTable(db: DatabaseAdapter, table: string, schema = 'public') {
+    const tableSchema = await db.getTableSchema(table, schema)
+    if ('error' in tableSchema) {
         return { error: tableSchema.error }
     }
     return {

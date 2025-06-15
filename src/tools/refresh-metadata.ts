@@ -1,13 +1,12 @@
-import { Pool } from 'pg'
-import { refreshTableMetadata, resolveTablesToRefresh, getAlreadyRefreshingTables } from '../db/table-metadata.js'
+import { DatabaseAdapter } from '../db/adapter.js'
 
-export async function handleRefreshMetadata(pool: Pool, schema = 'public', table?: string) {
-    const { tables, error } = await resolveTablesToRefresh(pool, schema, table)
+export async function handleRefreshMetadata(db: DatabaseAdapter, schema = 'public', table?: string) {
+    const { tables, error } = await db.resolveTablesToRefresh(schema, table)
     if (error) {
         return { success: false, error }
     }
 
-    const alreadyRefreshing = await getAlreadyRefreshingTables(schema, tables)
+    const alreadyRefreshing = await db.getAlreadyRefreshingTables(schema, tables)
     if (alreadyRefreshing.length > 0) {
         return {
             success: false,
@@ -16,7 +15,7 @@ export async function handleRefreshMetadata(pool: Pool, schema = 'public', table
     }
 
     // Fire and forget
-    refreshTableMetadata(pool, schema, table)
+    db.refreshTableMetadata(schema, table)
     if (table) {
         return { success: true, message: `Metadata refresh started for table: ${table}` }
     }

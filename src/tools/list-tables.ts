@@ -1,7 +1,6 @@
-import { listTables } from '../db/table-metadata.js'
-import { Pool } from 'pg'
+import { DatabaseAdapter } from '../db/adapter.js'
 
-export async function handleListTables(pool: Pool, schema = 'public') {
-    const tables = await listTables(pool, schema)
+export async function handleListTables(db: DatabaseAdapter, schema = 'public') {
+    const tables = await db.listTables(schema)
     return { tables }
 }
