@@ -4,7 +4,7 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import { createPool } from './db/pool.js'
+import { createDatabaseAdapter } from './db/adapter-factory.js'
 import { handleListResources, handleReadResource } from './resources/table-metadata.js'
 import { handleListTables } from './tools/list-tables.js'
 import { handleDescribeTable } from './tools/describe-table.js'
@@ -32,13 +32,13 @@ if (args.length === 0) {
 
 const databaseUrl = args[0]
 const schema = args[1] || 'public'
-const pool = createPool(databaseUrl)
+const db = createDatabaseAdapter(databaseUrl)
 
 // =========================
 // Resource Registrations
 // =========================
 
-server.resource('table-metadata', 'table-metadata://all', () => handleListResources(pool, schema))
+server.resource('table-metadata', 'table-metadata://all', () => handleListResources(db, schema))
 
 server.resource(
     'table-metadata-table',
@@ -48,7 +48,7 @@ server.resource(
             {
                 uri: uri.href,
                 mimeType: 'application/json',
-                text: JSON.stringify(await handleReadResource({ params: { uri: uri.href } }, schema), null, 2),
+                text: JSON.stringify(await handleReadResource(db, { params: { uri: uri.href } }, schema), null, 2),
             },
         ],
     }),
@@ -73,7 +73,7 @@ server.tool(
     'List all tables in the connected database. Returns an array of table names.',
     {},
     async () => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleListTables(pool, schema), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleListTables(db, schema), null, 2) }],
     }),
 )
 
@@ -82,7 +82,7 @@ server.tool(
     'Describe the columns, relationships, and sample data for a given table. Input: table name. Output: schema, relationships, samples, and column stats.',
     { table: z.string().describe('The name of the table to describe.') },
     async ({ table }: { table: string }) => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleDescribeTable(table, schema), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleDescribeTable(db, table, schema), null, 2) }],
     }),
 )
 
@@ -91,7 +91,7 @@ server.tool(
     'Run a read-only SQL SELECT query against the database. Input: SQL string. Output: query result rows.',
     { sql: z.string().describe('A SQL SELECT query to run against the database.') },
     async ({ sql }: { sql: string }) => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleRunQuery(pool, sql), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleRunQuery(db, sql), null, 2) }],
     }),
 )
 
@@ -106,7 +106,7 @@ server.tool(
         content: [
             {
                 type: 'text',
-                text: JSON.stringify(await handleGenerateSql(question, { ...context, schema }), null, 2),
+                text: JSON.stringify(await handleGenerateSql(question, { ...context, schema, db }), null, 2),
             },
         ],
     }),
@@ -149,7 +149,7 @@ server.tool(
     'Refresh the cached database metadata (schemas, samples, stats). Optionally specify a table to refresh only that table. Output: success message.',
     { table: z.string().optional().describe('The name of a table to refresh, or leave blank to refresh all tables.') },
     async ({ table }: { table?: string }) => ({
-        content: [{ type: 'text', text: JSON.stringify(await handleRefreshMetadata(pool, schema, table), null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(await handleRefreshMetadata(db, schema, table), null, 2) }],
     }),
 )
 

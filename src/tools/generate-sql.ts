@@ -1,4 +1,4 @@
-import { listTables, getTableSchema } from '../db/table-metadata.js'
+import { DatabaseAdapter } from '../db/adapter.js'
 
 export async function handleGenerateSql(question: string, context: any) {
     // Gather all table metadata
@@ -6,23 +6,22 @@ export async function handleGenerateSql(question: string, context: any) {
     const tables = context?.tables || []
     const schema = context?.schema || 'public'
     let tableMetadata: Record<string, any> = {}
-    if (tables.length === 0 && context?.pool) {
-        // If context provides a pool, use it to list tables
-        const allTables = await listTables(schema)
+    if (tables.length === 0 && context?.db) {
+        const allTables = await (context.db as DatabaseAdapter).listTables(schema)
         if ((allTables as any).error) {
             return { error: (allTables as any).error }
         }
         for (const table of allTables as string[]) {
-            const meta = await getTableSchema(table, schema)
-            if (meta.error) {
+            const meta = await (context.db as DatabaseAdapter).getTableSchema(table, schema)
+            if ('error' in meta) {
                 return { error: meta.error }
             }
             tableMetadata[table] = meta
         }
-    } else if (tables.length > 0 && context?.pool) {
+    } else if (tables.length > 0 && context?.db) {
         for (const table of tables) {
-            const meta = await getTableSchema(table, schema)
-            if (meta.error) {
+            const meta = await (context.db as DatabaseAdapter).getTableSchema(table, schema)
+            if ('error' in meta) {
                 return { error: meta.error }
             }
             tableMetadata[table] = meta
